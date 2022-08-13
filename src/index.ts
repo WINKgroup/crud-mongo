@@ -37,9 +37,9 @@ export default class CrudMongo<Doc extends Document> {
         return this.model
     }
 
-    async getResult(doc:Doc, covertUnderscoreId = false):Promise<any> {
+    async getResult(doc:Doc, convertUnderscoreId = false):Promise<any> {
         let result = doc.toObject({versionKey: false})
-        if (covertUnderscoreId && result._id) {
+        if (convertUnderscoreId && result._id) {
             result.id = result._id
             delete result._id
         }
