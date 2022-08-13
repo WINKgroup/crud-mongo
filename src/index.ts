@@ -53,22 +53,24 @@ export default class CrudMongo<Doc extends Document> {
         return doc
     }
 
+    setProtection(router:express.Router) {
+        router.use (jwt({
+            secret: Env.get('JWT_SECRET'),
+            algorithms: ['RS256', 'HS256']
+        }))
+
+        router.use((err:any, req:any, res:any, next:any) => {
+            if(err.name === 'UnauthorizedError') {
+                console.error(err)
+                res.status(err.status).send( err.message )
+                return
+            }
+            next()
+        })
+    }
+
     setRouterEndpoints(router:express.Router) {
-        if (this.protectEndpoints) {
-            router.use (jwt({
-                secret: Env.get('JWT_SECRET'),
-                algorithms: ['RS256', 'HS256']
-            }))
-    
-            router.use((err:any, req:any, res:any, next:any) => {
-                if(err.name === 'UnauthorizedError') {
-                    console.error(err)
-                    res.status(err.status).send( err.message )
-                    return
-                }
-                next()
-            })    
-        }
+        if (this.protectEndpoints) this.setProtection(router)
 
         router.get('/', async (req, res) => {
             try {
