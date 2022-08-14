@@ -11,30 +11,21 @@ export interface MaterialTableOptions {
 }
 
 export interface CrudMongoOptions<Doc extends Document> {
-    getModel: () => Promise< Model<Doc> >
+    model: Model<Doc>
     materialTable?: MaterialTableOptions
     protectEndpoints?: boolean
 }
 
 export default class CrudMongo<Doc extends Document> {
-    private model = null as Model<Doc> | null
-    private retrieveModel: () => Promise< Model<Doc> >
+    private CrudModel:Model<Doc>
     protectEndpoints:boolean
     materialTableOptions?: MaterialTableOptions
 
     constructor(inputOptions:CrudMongoOptions<Doc>) {
-        const options = _.defaults(inputOptions, {
-            protectEndpoints: true
-        })
-        this.retrieveModel = options.getModel
+        const options = _.defaults(inputOptions, { protectEndpoints: true })
         this.protectEndpoints = options.protectEndpoints
         this.materialTableOptions = options.materialTable
-    }
-
-    async getModel() {
-        if (this.model) return this.model
-        this.model = await this.retrieveModel()
-        return this.model
+        this.CrudModel = inputOptions.model
     }
 
     async getResult(doc:Doc, convertUnderscoreId = false):Promise<any> {
@@ -47,8 +38,7 @@ export default class CrudMongo<Doc extends Document> {
     }
 
     async getDocById(id:string, res:express.Response) {
-        const model = await this.getModel()
-        const doc = await model.findById(id)
+        const doc = await this.CrudModel.findById(id)
         if (!doc) res.status(404).send('not found')
         return doc
     }
@@ -74,7 +64,7 @@ export default class CrudMongo<Doc extends Document> {
 
         router.get('/', async (req, res) => {
             try {
-                const model = await this.getModel()
+                const model = this.CrudModel
                 const list = await model.find({})
                 const result = await Promise.all( list.map( (doc:Doc) => this.getResult(doc, true) ) )
                 res.json(result)
@@ -85,7 +75,7 @@ export default class CrudMongo<Doc extends Document> {
 
         router.post('/', async (req, res) => {
             try {
-                const model = await this.getModel()
+                const model = this.CrudModel
                 const doc = new model(req.body)
                 await doc.save()
                 const result = await this.getResult(doc, true)
@@ -97,7 +87,7 @@ export default class CrudMongo<Doc extends Document> {
 
         if (this.materialTableOptions) {
             router.post('/materialTable', async (req, res) => {
-                const Model = await this.getModel()
+                const model = this.CrudModel
                 let query:Query<Doc[], Doc>
                 const materialTableSearch = req.body  as MaterialTableSearch
                 const searchTransformation = this.materialTableOptions && this.materialTableOptions.searchFunc

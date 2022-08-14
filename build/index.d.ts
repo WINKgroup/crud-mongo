@@ -28,18 +28,17 @@ export interface MaterialTableOptions {
     searchFunc?: (search: string) => any;
 }
 export interface CrudMongoOptions<Doc extends Document> {
-    getModel: () => Promise<Model<Doc>>;
+    model: Model<Doc>;
     materialTable?: MaterialTableOptions;
     protectEndpoints?: boolean;
 }
 export default class CrudMongo<Doc extends Document> {
-    private model;
-    private retrieveModel;
+    private CrudModel;
     protectEndpoints: boolean;
     materialTableOptions?: MaterialTableOptions;
     constructor(inputOptions: CrudMongoOptions<Doc>);
-    getModel(): Promise<Model<Doc, {}, {}, {}, any>>;
-    getResult(doc: Doc, covertUnderscoreId?: boolean): Promise<any>;
+    getResult(doc: Doc, convertUnderscoreId?: boolean): Promise<any>;
     getDocById(id: string, res: express.Response): Promise<import("mongoose").HydratedDocument<Doc, {}, {}> | null>;
+    setProtection(router: express.Router): void;
     setRouterEndpoints(router: express.Router): void;
 }

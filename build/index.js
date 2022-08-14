@@ -41,43 +41,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_jwt_1 = require("express-jwt");
 var lodash_1 = __importDefault(require("lodash"));
+var mongoose_1 = require("mongoose");
 var db_mongo_1 = __importDefault(require("@winkgroup/db-mongo"));
 var env_1 = __importDefault(require("@winkgroup/env"));
 var error_manager_1 = __importDefault(require("@winkgroup/error-manager"));
 var CrudMongo = /** @class */ (function () {
     function CrudMongo(inputOptions) {
-        this.model = null;
-        var options = lodash_1.default.defaults(inputOptions, {
-            protectEndpoints: true
-        });
-        this.retrieveModel = options.getModel;
+        var options = lodash_1.default.defaults(inputOptions, { protectEndpoints: true });
         this.protectEndpoints = options.protectEndpoints;
         this.materialTableOptions = options.materialTable;
+        this.CrudModel = inputOptions.model;
     }
-    CrudMongo.prototype.getModel = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        if (this.model)
-                            return [2 /*return*/, this.model];
-                        _a = this;
-                        return [4 /*yield*/, this.retrieveModel()];
-                    case 1:
-                        _a.model = _b.sent();
-                        return [2 /*return*/, this.model];
-                }
-            });
-        });
-    };
-    CrudMongo.prototype.getResult = function (doc, covertUnderscoreId) {
-        if (covertUnderscoreId === void 0) { covertUnderscoreId = false; }
+    CrudMongo.prototype.getResult = function (doc, convertUnderscoreId) {
+        if (convertUnderscoreId === void 0) { convertUnderscoreId = false; }
         return __awaiter(this, void 0, void 0, function () {
             var result;
             return __generator(this, function (_a) {
                 result = doc.toObject({ versionKey: false });
-                if (covertUnderscoreId && result._id) {
+                if (convertUnderscoreId && result._id) {
                     result.id = result._id;
                     delete result._id;
                 }
@@ -87,14 +68,11 @@ var CrudMongo = /** @class */ (function () {
     };
     CrudMongo.prototype.getDocById = function (id, res) {
         return __awaiter(this, void 0, void 0, function () {
-            var model, doc;
+            var doc;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.getModel()];
+                    case 0: return [4 /*yield*/, this.CrudModel.findById(id)];
                     case 1:
-                        model = _a.sent();
-                        return [4 /*yield*/, model.findById(id)];
-                    case 2:
                         doc = _a.sent();
                         if (!doc)
                             res.status(404).send('not found');
@@ -103,45 +81,45 @@ var CrudMongo = /** @class */ (function () {
             });
         });
     };
+    CrudMongo.prototype.setProtection = function (router) {
+        router.use((0, express_jwt_1.expressjwt)({
+            secret: env_1.default.get('JWT_SECRET'),
+            algorithms: ['RS256', 'HS256']
+        }));
+        router.use(function (err, req, res, next) {
+            if (err.name === 'UnauthorizedError') {
+                console.error(err);
+                res.status(err.status).send(err.message);
+                return;
+            }
+            next();
+        });
+    };
     CrudMongo.prototype.setRouterEndpoints = function (router) {
         var _this = this;
-        if (this.protectEndpoints) {
-            router.use((0, express_jwt_1.expressjwt)({
-                secret: env_1.default.get('JWT_SECRET'),
-                algorithms: ['RS256', 'HS256']
-            }));
-            router.use(function (err, req, res, next) {
-                if (err.name === 'UnauthorizedError') {
-                    console.error(err);
-                    res.status(err.status).send(err.message);
-                    return;
-                }
-                next();
-            });
-        }
+        if (this.protectEndpoints)
+            this.setProtection(router);
         router.get('/', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
             var model, list, result, e_1;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        _a.trys.push([0, 4, , 5]);
-                        return [4 /*yield*/, this.getModel()];
-                    case 1:
-                        model = _a.sent();
+                        _a.trys.push([0, 3, , 4]);
+                        model = this.CrudModel;
                         return [4 /*yield*/, model.find({})];
-                    case 2:
+                    case 1:
                         list = _a.sent();
                         return [4 /*yield*/, Promise.all(list.map(function (doc) { return _this.getResult(doc, true); }))];
-                    case 3:
+                    case 2:
                         result = _a.sent();
                         res.json(result);
-                        return [3 /*break*/, 5];
-                    case 4:
+                        return [3 /*break*/, 4];
+                    case 3:
                         e_1 = _a.sent();
                         error_manager_1.default.sender(e_1, res);
-                        return [3 /*break*/, 5];
-                    case 5: return [2 /*return*/];
+                        return [3 /*break*/, 4];
+                    case 4: return [2 /*return*/];
                 }
             });
         }); });
@@ -150,48 +128,45 @@ var CrudMongo = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        _a.trys.push([0, 4, , 5]);
-                        return [4 /*yield*/, this.getModel()];
-                    case 1:
-                        model = _a.sent();
+                        _a.trys.push([0, 3, , 4]);
+                        model = this.CrudModel;
                         doc = new model(req.body);
                         return [4 /*yield*/, doc.save()];
-                    case 2:
+                    case 1:
                         _a.sent();
                         return [4 /*yield*/, this.getResult(doc, true)];
-                    case 3:
+                    case 2:
                         result = _a.sent();
                         res.json(result);
-                        return [3 /*break*/, 5];
-                    case 4:
+                        return [3 /*break*/, 4];
+                    case 3:
                         e_2 = _a.sent();
                         error_manager_1.default.sender(e_2, res);
-                        return [3 /*break*/, 5];
-                    case 5: return [2 /*return*/];
+                        return [3 /*break*/, 4];
+                    case 4: return [2 /*return*/];
                 }
             });
         }); });
         if (this.materialTableOptions) {
             router.post('/materialTable', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
-                var Model, query, materialTableSearch, searchTransformation, result, _a;
+                var model, query, materialTableSearch, searchTransformation, result, _a;
                 var _this = this;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
-                        case 0: return [4 /*yield*/, this.getModel()];
-                        case 1:
-                            Model = _b.sent();
+                        case 0:
+                            model = this.CrudModel;
                             materialTableSearch = req.body;
                             searchTransformation = this.materialTableOptions && this.materialTableOptions.searchFunc;
                             if (materialTableSearch.search && searchTransformation)
-                                query = Model.find(searchTransformation(materialTableSearch.search));
+                                query = mongoose_1.Model.find(searchTransformation(materialTableSearch.search));
                             else
-                                query = Model.find();
+                                query = mongoose_1.Model.find();
                             return [4 /*yield*/, db_mongo_1.default.fromQueryToMaterialTableData(query, materialTableSearch)];
-                        case 2:
+                        case 1:
                             result = _b.sent();
                             _a = result;
                             return [4 /*yield*/, Promise.all(result.data.map(function (doc) { return _this.getResult(doc, true); }))];
-                        case 3:
+                        case 2:
                             _a.data = _b.sent();
                             res.status(200).json(result);
                             return [2 /*return*/];
