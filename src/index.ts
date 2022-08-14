@@ -92,8 +92,8 @@ export default class CrudMongo<Doc extends Document> {
                 const materialTableSearch = req.body  as MaterialTableSearch
                 const searchTransformation = this.materialTableOptions && this.materialTableOptions.searchFunc
                 if (materialTableSearch.search && searchTransformation)
-                    query = Model.find( searchTransformation(materialTableSearch.search) )
-                    else query = Model.find()
+                    query = model.find( searchTransformation(materialTableSearch.search) )
+                    else query = model.find()
                 const result = await Db.fromQueryToMaterialTableData(query, materialTableSearch)
                 result.data = await Promise.all( result.data.map( doc => this.getResult(doc, true) ) )
                 res.status(200).json(result)

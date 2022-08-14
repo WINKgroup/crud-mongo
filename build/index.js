@@ -41,7 +41,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_jwt_1 = require("express-jwt");
 var lodash_1 = __importDefault(require("lodash"));
-var mongoose_1 = require("mongoose");
 var db_mongo_1 = __importDefault(require("@winkgroup/db-mongo"));
 var env_1 = __importDefault(require("@winkgroup/env"));
 var error_manager_1 = __importDefault(require("@winkgroup/error-manager"));
@@ -158,9 +157,9 @@ var CrudMongo = /** @class */ (function () {
                             materialTableSearch = req.body;
                             searchTransformation = this.materialTableOptions && this.materialTableOptions.searchFunc;
                             if (materialTableSearch.search && searchTransformation)
-                                query = mongoose_1.Model.find(searchTransformation(materialTableSearch.search));
+                                query = model.find(searchTransformation(materialTableSearch.search));
                             else
-                                query = mongoose_1.Model.find();
+                                query = model.find();
                             return [4 /*yield*/, db_mongo_1.default.fromQueryToMaterialTableData(query, materialTableSearch)];
                         case 1:
                             result = _b.sent();
