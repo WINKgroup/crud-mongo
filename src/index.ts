@@ -2,9 +2,10 @@ import express from "express"
 import {expressjwt as jwt} from 'express-jwt'
 import _ from "lodash"
 import { Document, Model, Query } from 'mongoose'
-import Db, { MaterialTableSearch } from "@winkgroup/db-mongo"
+import Db from "@winkgroup/db-mongo"
 import Env from "@winkgroup/env"
 import ErrorManager from "@winkgroup/error-manager"
+import { DataGridQuery } from "@winkgroup/db-mongo/build/commons"
 
 export interface MaterialTableOptions {
     searchFunc?: (search:string) => any
@@ -89,7 +90,7 @@ export default class CrudMongo<Doc extends Document> {
             router.post('/materialTable', async (req, res) => {
                 const model = this.CrudModel
                 let query:Query<Doc[], Doc>
-                const materialTableSearch = req.body  as MaterialTableSearch
+                const materialTableSearch = req.body  as DataGridQuery
                 const searchTransformation = this.materialTableOptions && this.materialTableOptions.searchFunc
                 if (materialTableSearch.search && searchTransformation)
                     query = model.find( searchTransformation(materialTableSearch.search) )
