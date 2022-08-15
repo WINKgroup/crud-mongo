@@ -94,6 +94,16 @@ var CrudMongo = /** @class */ (function () {
             next();
         });
     };
+    CrudMongo.prototype.objectIdErrorManager = function (e, res, next) {
+        if (e instanceof Error && e.name === "CastError") {
+            // @ts-ignore: line
+            if (e.path === '_id' && e.kind === 'ObjectId') {
+                next();
+                return;
+            }
+        }
+        error_manager_1.default.sender(e, res);
+    };
     CrudMongo.prototype.setRouterEndpoints = function (router) {
         var _this = this;
         if (this.protectEndpoints)
@@ -173,7 +183,7 @@ var CrudMongo = /** @class */ (function () {
                 });
             }); });
         }
-        router.get('/:id', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
+        router.get('/:id', function (req, res, next) { return __awaiter(_this, void 0, void 0, function () {
             var doc, result, e_3;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -191,13 +201,13 @@ var CrudMongo = /** @class */ (function () {
                         return [3 /*break*/, 4];
                     case 3:
                         e_3 = _a.sent();
-                        error_manager_1.default.sender(e_3, res);
+                        this.objectIdErrorManager(e_3, res, next);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
             });
         }); });
-        router.patch('/:id', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
+        router.patch('/:id', function (req, res, next) { return __awaiter(_this, void 0, void 0, function () {
             var doc, key, result, e_4;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -222,13 +232,13 @@ var CrudMongo = /** @class */ (function () {
                         return [3 /*break*/, 5];
                     case 4:
                         e_4 = _a.sent();
-                        error_manager_1.default.sender(e_4, res);
+                        this.objectIdErrorManager(e_4, res, next);
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
                 }
             });
         }); });
-        router.delete('/:id', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
+        router.delete('/:id', function (req, res, next) { return __awaiter(_this, void 0, void 0, function () {
             var doc, e_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -246,7 +256,7 @@ var CrudMongo = /** @class */ (function () {
                         return [3 /*break*/, 4];
                     case 3:
                         e_5 = _a.sent();
-                        error_manager_1.default.sender(e_5, res);
+                        this.objectIdErrorManager(e_5, res, next);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }

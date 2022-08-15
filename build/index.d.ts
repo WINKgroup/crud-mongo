@@ -22,7 +22,7 @@
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
-import express from "express";
+import express, { NextFunction } from "express";
 import { Document, Model } from 'mongoose';
 export interface MaterialTableOptions {
     searchFunc?: (search: string) => any;
@@ -40,5 +40,6 @@ export default class CrudMongo<Doc extends Document> {
     getResult(doc: Doc, convertUnderscoreId?: boolean): Promise<any>;
     getDocById(id: string, res: express.Response): Promise<import("mongoose").HydratedDocument<Doc, {}, {}> | null>;
     setProtection(router: express.Router): void;
+    objectIdErrorManager(e: unknown, res: any, next: NextFunction): void;
     setRouterEndpoints(router: express.Router): void;
 }

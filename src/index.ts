@@ -1,4 +1,4 @@
-import express from "express"
+import express, { NextFunction } from "express"
 import {expressjwt as jwt} from 'express-jwt'
 import _ from "lodash"
 import { Document, Model, Query } from 'mongoose'
@@ -60,6 +60,17 @@ export default class CrudMongo<Doc extends Document> {
         })
     }
 
+    objectIdErrorManager(e:unknown, res:any, next:NextFunction) {
+        if (e instanceof Error && e.name === "CastError") {
+            // @ts-ignore: line
+            if (e.path === '_id' && e.kind === 'ObjectId') {
+                next()
+                return
+            }
+        }
+        ErrorManager.sender(e, res)
+    }
+
     setRouterEndpoints(router:express.Router) {
         if (this.protectEndpoints) this.setProtection(router)
 
@@ -101,18 +112,18 @@ export default class CrudMongo<Doc extends Document> {
             })
         }
 
-        router.get('/:id', async (req, res) => {
+        router.get('/:id', async (req, res, next) => {
             try {
                 const doc = await this.getDocById(req.params.id, res)
                 if (!doc) return
                 const result = await this.getResult(doc, true)
                 res.json( result )
             } catch (e) {
-                ErrorManager.sender(e, res)
+                this.objectIdErrorManager(e, res, next)
             }
         })
 
-        router.patch('/:id', async (req, res) => {
+        router.patch('/:id', async (req, res, next) => {
             try {
                 const doc = await this.getDocById(req.params.id, res)
                 if (!doc) return
@@ -124,18 +135,18 @@ export default class CrudMongo<Doc extends Document> {
                 const result = await this.getResult(doc, true)
                 res.json( result )
             } catch (e) {
-                ErrorManager.sender(e, res)
+                this.objectIdErrorManager(e, res, next)
             }
         })
 
-        router.delete('/:id', async (req, res) => {
+        router.delete('/:id', async (req, res, next) => {
             try {
                 const doc = await this.getDocById(req.params.id, res)
                 if (!doc) return
                 await doc.remove()
                 res.json()
             } catch (e) {
-                ErrorManager.sender(e, res)
+                this.objectIdErrorManager(e, res, next)
             }
         })
     }
