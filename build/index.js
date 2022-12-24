@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -39,17 +39,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var db_mongo_1 = __importDefault(require("@winkgroup/db-mongo"));
 var express_jwt_1 = require("express-jwt");
 var lodash_1 = __importDefault(require("lodash"));
-var db_mongo_1 = __importDefault(require("@winkgroup/db-mongo"));
-var env_1 = __importDefault(require("@winkgroup/env"));
-var error_manager_1 = __importDefault(require("@winkgroup/error-manager"));
+var errorManager_1 = __importDefault(require("./errorManager"));
 var CrudMongo = /** @class */ (function () {
     function CrudMongo(inputOptions) {
-        var options = lodash_1.default.defaults(inputOptions, { protectEndpoints: true });
+        var options = lodash_1.default.defaults(inputOptions, {
+            protectEndpoints: false,
+            jwtSecret: ''
+        });
         this.protectEndpoints = options.protectEndpoints;
         this.materialTableOptions = options.materialTable;
         this.CrudModel = inputOptions.model;
+        this.jwtSecret = options.jwtSecret;
+        if (!this.jwtSecret && this.protectEndpoints)
+            throw new Error('please set jwtSecret in order to protected crudMongo endpoints');
     }
     CrudMongo.prototype.getResult = function (doc, convertUnderscoreId) {
         if (convertUnderscoreId === void 0) { convertUnderscoreId = false; }
@@ -82,7 +87,7 @@ var CrudMongo = /** @class */ (function () {
     };
     CrudMongo.prototype.setProtection = function (router) {
         router.use((0, express_jwt_1.expressjwt)({
-            secret: env_1.default.get('JWT_SECRET'),
+            secret: this.jwtSecret,
             algorithms: ['RS256', 'HS256']
         }));
         router.use(function (err, req, res, next) {
@@ -94,20 +99,15 @@ var CrudMongo = /** @class */ (function () {
             next();
         });
     };
-    CrudMongo.prototype.objectIdErrorManager = function (e, res, next) {
-        if (e instanceof Error && e.name === "CastError") {
-            // @ts-ignore: line
-            if (e.path === '_id' && e.kind === 'ObjectId') {
-                next();
-                return;
-            }
-        }
-        error_manager_1.default.sender(e, res);
+    CrudMongo.prototype.getErrorManager = function () {
+        var errorManager = new errorManager_1.default();
+        return errorManager;
     };
     CrudMongo.prototype.setRouterEndpoints = function (router) {
         var _this = this;
         if (this.protectEndpoints)
             this.setProtection(router);
+        var errorManager = this.getErrorManager();
         router.get('/', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
             var model, list, result, e_1;
             var _this = this;
@@ -126,7 +126,7 @@ var CrudMongo = /** @class */ (function () {
                         return [3 /*break*/, 4];
                     case 3:
                         e_1 = _a.sent();
-                        error_manager_1.default.sender(e_1, res);
+                        errorManager.sender(res, e_1);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -150,7 +150,7 @@ var CrudMongo = /** @class */ (function () {
                         return [3 /*break*/, 4];
                     case 3:
                         e_2 = _a.sent();
-                        error_manager_1.default.sender(e_2, res);
+                        errorManager.sender(res, e_2);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -201,7 +201,7 @@ var CrudMongo = /** @class */ (function () {
                         return [3 /*break*/, 4];
                     case 3:
                         e_3 = _a.sent();
-                        this.objectIdErrorManager(e_3, res, next);
+                        errorManager.senderOrNextEndpointIfItNotAnObjectId(res, next, e_3);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -232,7 +232,7 @@ var CrudMongo = /** @class */ (function () {
                         return [3 /*break*/, 5];
                     case 4:
                         e_4 = _a.sent();
-                        this.objectIdErrorManager(e_4, res, next);
+                        errorManager.senderOrNextEndpointIfItNotAnObjectId(res, next, e_4);
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
                 }
@@ -256,7 +256,7 @@ var CrudMongo = /** @class */ (function () {
                         return [3 /*break*/, 4];
                     case 3:
                         e_5 = _a.sent();
-                        this.objectIdErrorManager(e_5, res, next);
+                        errorManager.senderOrNextEndpointIfItNotAnObjectId(res, next, e_5);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }

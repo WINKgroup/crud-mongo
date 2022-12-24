@@ -22,8 +22,9 @@
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
-import express, { NextFunction } from "express";
+import express from "express";
 import { Document, Model } from 'mongoose';
+import ErrorManagerCrudMongo from "./errorManager";
 export interface MaterialTableOptions {
     searchFunc?: (search: string) => any;
 }
@@ -31,15 +32,17 @@ export interface CrudMongoOptions<Doc extends Document> {
     model: Model<Doc>;
     materialTable?: MaterialTableOptions;
     protectEndpoints?: boolean;
+    jwtSecret?: string;
 }
 export default class CrudMongo<Doc extends Document> {
     private CrudModel;
     protectEndpoints: boolean;
     materialTableOptions?: MaterialTableOptions;
+    jwtSecret: string;
     constructor(inputOptions: CrudMongoOptions<Doc>);
     getResult(doc: Doc, convertUnderscoreId?: boolean): Promise<any>;
     getDocById(id: string, res: express.Response): Promise<import("mongoose").HydratedDocument<Doc, {}, {}> | null>;
     setProtection(router: express.Router): void;
-    objectIdErrorManager(e: unknown, res: any, next: NextFunction): void;
+    getErrorManager(): ErrorManagerCrudMongo;
     setRouterEndpoints(router: express.Router): void;
 }
