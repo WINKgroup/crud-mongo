@@ -1,11 +1,10 @@
-import express, { NextFunction } from "express"
-import {expressjwt as jwt} from 'express-jwt'
+import Db from "@winkgroup/db-mongo"
+import { DataGridQuery } from "@winkgroup/db-mongo/build/common"
+import express from "express"
+import { expressjwt as jwt } from 'express-jwt'
 import _ from "lodash"
 import { Document, Model, Query } from 'mongoose'
-import Db from "@winkgroup/db-mongo"
-import Env from "@winkgroup/env"
-import ErrorManager from "@winkgroup/error-manager"
-import { DataGridQuery } from "@winkgroup/db-mongo/build/commons"
+import ErrorManagerCrudMongo from "./errorManager"
 
 export interface MaterialTableOptions {
     searchFunc?: (search:string) => any
@@ -15,18 +14,26 @@ export interface CrudMongoOptions<Doc extends Document> {
     model: Model<Doc>
     materialTable?: MaterialTableOptions
     protectEndpoints?: boolean
+    jwtSecret?: string
 }
 
 export default class CrudMongo<Doc extends Document> {
     private CrudModel:Model<Doc>
     protectEndpoints:boolean
     materialTableOptions?: MaterialTableOptions
+    jwtSecret:string
 
     constructor(inputOptions:CrudMongoOptions<Doc>) {
-        const options = _.defaults(inputOptions, { protectEndpoints: true })
+        const options = _.defaults(inputOptions, {
+            protectEndpoints: false,
+            jwtSecret: ''
+        })
         this.protectEndpoints = options.protectEndpoints
         this.materialTableOptions = options.materialTable
         this.CrudModel = inputOptions.model
+        this.jwtSecret = options.jwtSecret
+
+        if (!this.jwtSecret && this.protectEndpoints) throw new Error('please set jwtSecret in order to protected crudMongo endpoints')
     }
 
     async getResult(doc:Doc, convertUnderscoreId = false):Promise<any> {
@@ -46,7 +53,7 @@ export default class CrudMongo<Doc extends Document> {
 
     setProtection(router:express.Router) {
         router.use (jwt({
-            secret: Env.get('JWT_SECRET'),
+            secret: this.jwtSecret,
             algorithms: ['RS256', 'HS256']
         }))
 
@@ -60,19 +67,14 @@ export default class CrudMongo<Doc extends Document> {
         })
     }
 
-    objectIdErrorManager(e:unknown, res:any, next:NextFunction) {
-        if (e instanceof Error && e.name === "CastError") {
-            // @ts-ignore: line
-            if (e.path === '_id' && e.kind === 'ObjectId') {
-                next()
-                return
-            }
-        }
-        ErrorManager.sender(e, res)
+    getErrorManager() {
+        const errorManager = new ErrorManagerCrudMongo()
+        return errorManager
     }
 
     setRouterEndpoints(router:express.Router) {
         if (this.protectEndpoints) this.setProtection(router)
+        const errorManager = this.getErrorManager()
 
         router.get('/', async (req, res) => {
             try {
@@ -81,7 +83,7 @@ export default class CrudMongo<Doc extends Document> {
                 const result = await Promise.all( list.map( (doc:Doc) => this.getResult(doc, true) ) )
                 res.json(result)
             } catch (e) {
-                ErrorManager.sender(e, res)
+                errorManager.sender(res, e)
             }
         })
 
@@ -93,7 +95,7 @@ export default class CrudMongo<Doc extends Document> {
                 const result = await this.getResult(doc, true)
                 res.json( result )
             } catch (e) {
-                ErrorManager.sender(e, res)
+                errorManager.sender(res, e)
             }
         })
 
@@ -119,7 +121,7 @@ export default class CrudMongo<Doc extends Document> {
                 const result = await this.getResult(doc, true)
                 res.json( result )
             } catch (e) {
-                this.objectIdErrorManager(e, res, next)
+                errorManager.senderOrNextEndpointIfItNotAnObjectId(res, next, e)
             }
         })
 
@@ -135,7 +137,7 @@ export default class CrudMongo<Doc extends Document> {
                 const result = await this.getResult(doc, true)
                 res.json( result )
             } catch (e) {
-                this.objectIdErrorManager(e, res, next)
+                errorManager.senderOrNextEndpointIfItNotAnObjectId(res, next, e)
             }
         })
 
@@ -146,7 +148,7 @@ export default class CrudMongo<Doc extends Document> {
                 await doc.remove()
                 res.json()
             } catch (e) {
-                this.objectIdErrorManager(e, res, next)
+                errorManager.senderOrNextEndpointIfItNotAnObjectId(res, next, e)
             }
         })
     }
