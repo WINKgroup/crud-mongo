@@ -33,6 +33,7 @@
   },
   "homepage": "https://github.com/WINKgroup/crud-mongo#readme",
   "dependencies": {
+    "@mui/x-data-grid": "^6.6.0",
     "@winkgroup/db-mongo": "^4.0.4",
     "@winkgroup/error-manager": "^1.1.2",
     "express": "^4.18.2",

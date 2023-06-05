@@ -6,11 +6,11 @@
 	],
 	"settings": {
 		"files.watcherExclude": {
-			"build/**": true
+			"dist/**": true,
 		},
 		"search.exclude": {
-			"build/**": true,
-			"package-lock.json": true
+			"dist/**": true,
+			"yarn.lock": true
 		}
 	}
 }

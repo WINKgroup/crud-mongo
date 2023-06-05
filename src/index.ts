@@ -1,13 +1,17 @@
-import Db from '@winkgroup/db-mongo';
-import { DataGridQuery } from '@winkgroup/db-mongo';
+import { GridFilterModel } from '@mui/x-data-grid';
 import express from 'express';
 import { expressjwt as jwt } from 'express-jwt';
 import _ from 'lodash';
-import { Document, Model, Query } from 'mongoose';
+import { Document, Model } from 'mongoose';
+import {
+    dataGridSortToMongoSort,
+    emptyDataGrid,
+    itemsFilterToMongoFind,
+} from './commonDataGrid';
 import ErrorManagerCrudMongo from './errorManager';
 
 export interface MaterialTableOptions {
-    searchFunc?: (search: string) => any;
+    quickFilterToMongoFind?: (filter: GridFilterModel) => any;
 }
 
 export interface CrudMongoOptions<Doc extends Document> {
@@ -108,25 +112,52 @@ export default class CrudMongo<Doc extends Document> {
 
         if (this.materialTableOptions) {
             router.post('/materialTable', async (req, res) => {
-                const model = this.CrudModel;
-                let query: Query<Doc[], Doc>;
-                const materialTableSearch = req.body as DataGridQuery;
-                const searchTransformation =
-                    this.materialTableOptions &&
-                    this.materialTableOptions.searchFunc;
-                if (materialTableSearch.search && searchTransformation)
-                    query = model.find(
-                        searchTransformation(materialTableSearch.search)
+                console.log(req.body);
+                const result = _.cloneDeep(emptyDataGrid);
+                result.query = req.body;
+                const Model = this.CrudModel;
+
+                let quickFilterObj = null;
+                let itemsFilterObj = null;
+                if (
+                    result.query.filter &&
+                    result.query.filter.quickFilterValues &&
+                    this.materialTableOptions!.quickFilterToMongoFind
+                )
+                    quickFilterObj =
+                        this.materialTableOptions!.quickFilterToMongoFind(
+                            result.query.filter!
+                        );
+                if (result.query.filter && result.query.filter.items.length > 0)
+                    itemsFilterObj = itemsFilterToMongoFind(
+                        result.query.filter
                     );
-                else query = model.find();
-                const result = await Db.fromQueryToMaterialTableData(
-                    query,
-                    materialTableSearch
+
+                let queryObj: object = {};
+                if (quickFilterObj && itemsFilterObj)
+                    queryObj = { $and: [quickFilterObj, itemsFilterObj] };
+                else if (!itemsFilterObj) queryObj = quickFilterObj;
+                else if (!quickFilterObj) queryObj = itemsFilterObj;
+
+                if (result.query.rowCount === undefined) {
+                    result.query.rowCount = await Model.count(queryObj);
+                    result.rowCount = result.query.rowCount;
+                } else result.rowCount = result.query.rowCount;
+
+                let queryChain = Model.find(queryObj)
+                    .limit(result.query.pagination.pageSize)
+                    .skip(
+                        result.query.pagination.pageSize *
+                            result.query.pagination.page
+                    );
+                if (result.query.sort)
+                    queryChain.sort(dataGridSortToMongoSort(result.query.sort));
+                const docs = await queryChain.exec();
+                result.rows = await Promise.all(
+                    docs.map((doc) => this.getResult(doc, true))
                 );
-                result.data = await Promise.all(
-                    result.data.map((doc) => this.getResult(doc, true))
-                );
-                res.status(200).json(result);
+
+                res.json(result);
             });
         }
 
