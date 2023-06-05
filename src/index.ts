@@ -116,7 +116,6 @@ export default class CrudMongo<Doc extends Document> {
 
         if (this.materialTableOptions) {
             router.post('/materialTable', async (req, res) => {
-                console.log(req.body);
                 const result = _.cloneDeep(emptyDataGrid);
                 result.query = req.body;
                 const Model = this.CrudModel;
@@ -217,4 +216,12 @@ export default class CrudMongo<Doc extends Document> {
     }
 }
 
-export { ErrorManagerCrudMongo, DataGridQuery, DataGridRow, IDataGrid, emptyDataGrid, dataGridSortToMongoSort, defaultQuickFilterToMongoFind };
+export {
+    ErrorManagerCrudMongo,
+    DataGridQuery,
+    DataGridRow,
+    IDataGrid,
+    emptyDataGrid,
+    dataGridSortToMongoSort,
+    defaultQuickFilterToMongoFind,
+};

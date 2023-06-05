@@ -24,11 +24,10 @@ export interface GridFilterItem {
     operator: string;
 }
 declare enum GridLogicOperator {
-    And = "and",
-    Or = "or"
+    And = 'and',
+    Or = 'or',
 }
 export { GridLogicOperator };
-
 
 /**
  * Model describing the filters to apply to the grid.
@@ -72,7 +71,6 @@ export interface GridPaginationModel {
      */
     page: number;
 }
-
 
 export type GridSortDirection = 'asc' | 'desc' | null | undefined;
 /**

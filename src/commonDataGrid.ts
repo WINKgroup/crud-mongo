@@ -1,5 +1,9 @@
 import { SortOrder } from 'mongoose';
-import { GridFilterModel, GridPaginationModel, GridSortModel } from './clonedByDataGrid';
+import {
+    GridFilterModel,
+    GridPaginationModel,
+    GridSortModel,
+} from './clonedByDataGrid';
 
 export interface DataGridQuery {
     filter?: GridFilterModel;
