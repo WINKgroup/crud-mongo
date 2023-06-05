@@ -1,9 +1,5 @@
-import {
-    GridFilterModel,
-    GridPaginationModel,
-    GridSortModel,
-} from '@mui/x-data-grid';
 import { SortOrder } from 'mongoose';
+import { GridFilterModel, GridPaginationModel, GridSortModel } from './clonedByDataGrid';
 
 export interface DataGridQuery {
     filter?: GridFilterModel;

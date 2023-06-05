@@ -1,14 +1,18 @@
-import { GridFilterModel } from '@mui/x-data-grid';
 import express from 'express';
 import { expressjwt as jwt } from 'express-jwt';
 import _ from 'lodash';
 import { Document, Model } from 'mongoose';
 import {
+    DataGridQuery,
+    DataGridRow,
+    IDataGrid,
     dataGridSortToMongoSort,
+    defaultQuickFilterToMongoFind,
     emptyDataGrid,
     itemsFilterToMongoFind,
 } from './commonDataGrid';
 import ErrorManagerCrudMongo from './errorManager';
+import { GridFilterModel } from './clonedByDataGrid';
 
 export interface MaterialTableOptions {
     quickFilterToMongoFind?: (filter: GridFilterModel) => any;
@@ -213,4 +217,4 @@ export default class CrudMongo<Doc extends Document> {
     }
 }
 
-export { ErrorManagerCrudMongo };
+export { ErrorManagerCrudMongo, DataGridQuery, DataGridRow, IDataGrid, emptyDataGrid, dataGridSortToMongoSort, defaultQuickFilterToMongoFind };
