@@ -1,3 +1,5 @@
 yarn.lock
 src/test.ts
 src/test-server.ts
+node_modules
+dist
