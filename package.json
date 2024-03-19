@@ -1,6 +1,6 @@
 {
   "name": "@winkgroup/crud-mongo",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "CRUD helper class for REST endpoints",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
