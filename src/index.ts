@@ -143,7 +143,7 @@ export default class CrudMongo<Doc extends Document> {
                 else if (!quickFilterObj) queryObj = itemsFilterObj;
 
                 if (result.query.rowCount === undefined) {
-                    result.query.rowCount = await Model.count(queryObj);
+                    result.query.rowCount = await Model.countDocuments(queryObj);
                     result.rowCount = result.query.rowCount;
                 } else result.rowCount = result.query.rowCount;
 
